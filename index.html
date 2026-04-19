@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="บัญชีครัวเรือน">
+<title>บัญชีครัวเรือน</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,'Sarabun','TH SarabunPSK',sans-serif}
+  body{display:flex;flex-direction:column;align-items:center}
+  .app{width:100%;max-width:430px;min-height:100vh;background:#f2f2f7;display:flex;flex-direction:column}
+
+  .screen{display:none;flex-direction:column;min-height:100vh}
+  .screen.active{display:flex}
+
+  .topbar{background:#fff;padding:56px 16px 12px;border-bottom:0.5px solid #c8c7cc;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+  .topbar h2{font-size:17px;font-weight:600;color:#1c1c1e;flex:1}
+  .back-btn{background:none;border:none;cursor:pointer;color:#007aff;font-size:16px;padding:4px 12px 4px 0;font-family:inherit}
+
+  .content{flex:1;padding:16px;overflow-y:auto;padding-bottom:40px}
+
+  .home-header{background:#fff;padding:56px 20px 18px;border-bottom:0.5px solid #c8c7cc}
+  .home-header h1{font-size:28px;font-weight:700;color:#1c1c1e}
+  .home-header .date-txt{font-size:14px;color:#8e8e93;margin-top:4px}
+
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 16px}
+  .menu-card{background:#fff;border-radius:16px;padding:18px 16px;cursor:pointer;transition:transform 0.1s,opacity 0.1s;text-align:left;border:none;width:100%;font-family:inherit}
+  .menu-card:active{transform:scale(0.97);opacity:0.85}
+  .menu-card.full{grid-column:1/-1}
+  .menu-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+  .menu-card h3{font-size:14px;font-weight:600;color:#1c1c1e;line-height:1.4}
+  .menu-card p{font-size:12px;color:#8e8e93;margin-top:3px}
+  .menu-badge{font-size:13px;font-weight:600;color:#34c759;margin-top:6px}
+  .menu-badge.red{color:#ff3b30}
+
+  .tab-bar{display:flex;background:#fff;border-bottom:0.5px solid #c8c7cc}
+  .tab-btn{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font-size:12px;color:#8e8e93;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color 0.15s}
+  .tab-btn.active{color:#007aff;font-weight:600}
+  .tab-icon{font-size:20px}
+
+  .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px}
+  .section-label{font-size:13px;font-weight:600;color:#8e8e93;margin:18px 0 8px;text-transform:uppercase;letter-spacing:0.4px}
+
+  .form-row{margin-bottom:14px}
+  .form-row label{font-size:13px;color:#8e8e93;display:block;margin-bottom:6px;font-weight:500}
+  .form-row input,.form-row select,.form-row textarea{
+    width:100%;padding:11px 14px;border:1px solid #e5e5ea;border-radius:10px;
+    font-size:16px;background:#f9f9f9;color:#1c1c1e;font-family:inherit;
+    -webkit-appearance:none;outline:none
+  }
+  .form-row input:focus,.form-row textarea:focus{border-color:#007aff;background:#fff}
+  .form-row textarea{resize:none;height:72px;line-height:1.5}
+
+  .type-toggle{display:flex;gap:8px;margin-bottom:16px;background:#f2f2f7;border-radius:10px;padding:3px}
+  .type-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:15px;cursor:pointer;background:none;color:#8e8e93;font-family:inherit;font-weight:500;transition:all 0.15s}
+  .type-btn.sel-inc{background:#fff;color:#34c759;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+  .type-btn.sel-exp{background:#fff;color:#ff3b30;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+
+  .submit-btn{width:100%;padding:15px;background:#007aff;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .submit-btn:active{opacity:0.8}
+  .submit-btn:disabled{opacity:0.5}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .stat-card{background:#fff;border-radius:14px;padding:14px}
+  .stat-card .s-label{font-size:13px;color:#8e8e93;margin-bottom:5px}
+  .stat-card .s-value{font-size:20px;font-weight:700;color:#1c1c1e}
+  .s-value.green{color:#34c759}
+  .s-value.red{color:#ff3b30}
+
+  .big-stat{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;text-align:center}
+  .big-stat .bs-label{font-size:14px;color:#8e8e93;margin-bottom:6px}
+  .big-stat .bs-value{font-size:32px;font-weight:700;color:#1c1c1e}
+
+  .log-item{background:#fff;border-radius:12px;padding:13px 15px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .log-item .li-left .li-name{font-size:15px;color:#1c1c1e;font-weight:500}
+  .log-item .li-left .li-sub{font-size:12px;color:#8e8e93;margin-top:3px;line-height:1.4}
+  .log-item .li-amount{font-size:16px;font-weight:700;white-space:nowrap;margin-left:10px}
+  .li-amount.inc{color:#34c759}
+  .li-amount.exp{color:#ff3b30}
+
+  .month-sel-wrap{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .month-sel-wrap label{font-size:14px;color:#8e8e93;white-space:nowrap}
+  .month-sel-wrap select{flex:1;border:none;background:none;font-size:15px;color:#1c1c1e;font-family:inherit;font-weight:500;-webkit-appearance:none;outline:none}
+
+  .empty{text-align:center;padding:48px 20px;color:#8e8e93;font-size:15px}
+  .empty-icon{font-size:40px;margin-bottom:12px}
+
+  .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.78);color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+
+  .loading{text-align:center;padding:32px;color:#8e8e93;font-size:15px}
+  .spinner{display:inline-block;width:24px;height:24px;border:3px solid #e5e5ea;border-top-color:#007aff;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:10px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .month-group-label{font-size:13px;font-weight:600;color:#8e8e93;margin:16px 0 6px;padding-left:4px}
+
+  .sync-bar{background:#e8f4fd;padding:8px 16px;display:flex;align-items:center;gap:8px;font-size:13px;color:#007aff;border-bottom:0.5px solid #c8e6fb}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#34c759;flex-shrink:0}
+  .sync-dot.syncing{background:#ff9500;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="home-header">
+    <h1>บัญชีครัวเรือน</h1>
+    <div class="date-txt" id="home-date"></div>
+  </div>
+  <div class="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-txt">เชื่อมต่อ Google Sheets</span>
+  </div>
+  <div class="menu-grid">
+    <div class="menu-card" onclick="goMonthly()">
+      <div class="menu-icon" style="background:#e8f8ee">💰</div>
+      <h3>เงินใช้รายเดือน</h3>
+      <p>รายรับ – รายจ่าย</p>
+      <div class="menu-badge" id="home-monthly-bal">กำลังโหลด...</div>
+    </div>
+    <div class="menu-card" onclick="goSavings('face','เงินเก็บค่าทำหน้าพี่ดั๊ก')">
+      <div class="menu-icon" style="background:#fde8f0">✨</div>
+      <h3>ค่าทำหน้าพี่ดั๊ก</h3>
+      <p>ออมเงิน</p>
+      <div class="menu-badge" id="home-face-bal">กำลังโหลด...</div>
+    </div>
+    <div class="menu-card" onclick="goSavings('phone','เงินเก็บค่าซื้อมือถือ')">
+      <div class="menu-icon" style="background:#e5f0fd">📱</div>
+      <h3>ค่าซื้อมือถือ</h3>
+      <p>ออมเงิน</p>
+      <div class="menu-badge" id="home-phone-bal">กำลังโหลด...</div>
+    </div>
+    <div class="menu-card" onclick="goSavings('aia','เงินเก็บค่าประกัน AIA')">
+      <div class="menu-icon" style="background:#fef3e2">🛡️</div>
+      <h3>ประกัน AIA</h3>
+      <p>ออมเงิน</p>
+      <div class="menu-badge" id="home-aia-bal">กำลังโหลด...</div>
+    </div>
+    <div class="menu-card full" onclick="goOther()">
+      <div class="menu-icon" style="background:#f0f0f0">📋</div>
+      <h3>ค่าใช้จ่ายอื่นๆ</h3>
+      <p>บันทึกค่าใช้จ่ายที่ไม่ได้คาดคิด</p>
+      <div class="menu-badge red" id="home-other-bal">กำลังโหลด...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MONTHLY -->
+<div id="screen-monthly" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">← กลับ</button>
+    <h2>เงินใช้รายเดือน</h2>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="mt-add" onclick="setMTab('add')"><span class="tab-icon">✏️</span>บันทึก</button>
+    <button class="tab-btn" id="mt-sum" onclick="setMTab('sum')"><span class="tab-icon">📊</span>สรุปเดือน</button>
+    <button class="tab-btn" id="mt-log" onclick="setMTab('log')"><span class="tab-icon">📋</span>ย้อนหลัง</button>
+  </div>
+  <div class="content">
+    <div id="mv-add">
+      <div class="section-label">เพิ่มรายการ</div>
+      <div class="card">
+        <div class="type-toggle">
+          <button class="type-btn sel-inc" id="mbtn-inc" onclick="setMType('income')">+ รายรับ</button>
+          <button class="type-btn" id="mbtn-exp" onclick="setMType('expense')">- รายจ่าย</button>
+        </div>
+        <div class="form-row"><label>รายการ</label><input type="text" id="m-name" placeholder="เช่น เงินเดือน, ซื้อข้าว"></div>
+        <div class="form-row"><label>จำนวนเงิน (บาท)</label><input type="number" id="m-amount" placeholder="0" inputmode="decimal"></div>
+        <div class="form-row"><label>หมายเหตุ (ถ้ามี)</label><textarea id="m-note" placeholder="รายละเอียดเพิ่มเติม"></textarea></div>
+        <button class="submit-btn" id="m-submit" onclick="addMonthly()">บันทึก</button>
+      </div>
+    </div>
+    <div id="mv-sum" style="display:none">
+      <div class="month-sel-wrap">
+        <label>เลือกเดือน :</label>
+        <select id="m-sel-month" onchange="renderMonthlySummary()"></select>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="s-label">รายรับ</div><div class="s-value green" id="ms-inc">฿0</div></div>
+        <div class="stat-card"><div class="s-label">รายจ่าย</div><div class="s-value red" id="ms-exp">฿0</div></div>
+      </div>
+      <div class="big-stat">
+        <div class="bs-label">เงินคงเหลือ</div>
+        <div class="bs-value" id="ms-bal">฿0</div>
+      </div>
+      <div class="section-label">รายการในเดือนนี้</div>
+      <div id="ms-items"></div>
+    </div>
+    <div id="mv-log" style="display:none">
+      <div class="section-label">ประวัติทั้งหมด</div>
+      <div id="m-log-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVINGS -->
+<div id="screen-savings" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">← กลับ</button>
+    <h2 id="sav-title">ออมเงิน</h2>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="st-add" onclick="setSTab('add')"><span class="tab-icon">✏️</span>บันทึก</button>
+    <button class="tab-btn" id="st-log" onclick="setSTab('log')"><span class="tab-icon">📋</span>ย้อนหลัง</button>
+  </div>
+  <div class="content">
+    <div id="sv-add">
+      <div class="big-stat">
+        <div class="bs-label">ยอดออมรวม</div>
+        <div class="bs-value" id="sav-total-disp">฿0</div>
+      </div>
+      <div class="section-label">เพิ่มรายการ</div>
+      <div class="card">
+        <div class="type-toggle">
+          <button class="type-btn sel-inc" id="sbtn-inc" onclick="setSType('income')">+ เงินเข้า</button>
+          <button class="type-btn" id="sbtn-exp" onclick="setSType('expense')">- เงินออก</button>
+        </div>
+        <div class="form-row"><label>รายการ</label><input type="text" id="sav-name" placeholder="เช่น ออมประจำเดือน, ฉีดโบท็อกซ์"></div>
+        <div class="form-row"><label>จำนวนเงิน (บาท)</label><input type="number" id="sav-amount" placeholder="0" inputmode="decimal"></div>
+        <div class="form-row"><label>เดือน/ปี</label><input type="text" id="sav-month" placeholder="เช่น มีนาคม 2569"></div>
+        <div class="form-row"><label>หมายเหตุ (ถ้ามี)</label><textarea id="sav-note" placeholder="รายละเอียด"></textarea></div>
+        <button class="submit-btn" id="sav-submit" onclick="addSaving()">บันทึก</button>
+      </div>
+    </div>
+    <div id="sv-log" style="display:none">
+      <div class="big-stat">
+        <div class="bs-label">ยอดออมรวม</div>
+        <div class="bs-value" id="sav-total-log">฿0</div>
+      </div>
+      <div class="section-label">ประวัติทั้งหมด</div>
+      <div id="sav-log-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- OTHER -->
+<div id="screen-other" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">← กลับ</button>
+    <h2>ค่าใช้จ่ายอื่นๆ</h2>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="ot-add" onclick="setOTab('add')"><span class="tab-icon">✏️</span>บันทึก</button>
+    <button class="tab-btn" id="ot-log" onclick="setOTab('log')"><span class="tab-icon">📋</span>ย้อนหลัง</button>
+  </div>
+  <div class="content">
+    <div id="ov-add">
+      <div class="big-stat">
+        <div class="bs-label">รวมค่าใช้จ่ายอื่นๆ ทั้งหมด</div>
+        <div class="bs-value red" id="oth-total-disp">฿0</div>
+      </div>
+      <div class="section-label">เพิ่มรายการ</div>
+      <div class="card">
+        <div class="form-row"><label>ประเภท (ตั้งชื่อเอง)</label><input type="text" id="oth-cat" placeholder="เช่น ค่าซ่อมทีวีเสีย, ค่ายา"></div>
+        <div class="form-row"><label>รายละเอียด</label><input type="text" id="oth-name" placeholder="รายละเอียดเพิ่มเติม"></div>
+        <div class="form-row"><label>จำนวนเงิน (บาท)</label><input type="number" id="oth-amount" placeholder="0" inputmode="decimal"></div>
+        <div class="form-row"><label>หมายเหตุ (ถ้ามี)</label><textarea id="oth-note" placeholder="หมายเหตุ"></textarea></div>
+        <button class="submit-btn" id="oth-submit" onclick="addOther()">บันทึก</button>
+      </div>
+    </div>
+    <div id="ov-log" style="display:none">
+      <div class="big-stat">
+        <div class="bs-label">รวมค่าใช้จ่ายอื่นๆ ทั้งหมด</div>
+        <div class="bs-value red" id="oth-total-log">฿0</div>
+      </div>
+      <div class="section-label">ประวัติทั้งหมด</div>
+      <div id="oth-log-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyi_roCJ0XgblOkT94fjABzwo49mgMFBHpaqJXIIzw388UdWGeBifvBUYBCOwnv_XWP6A/exec';
+
+// ── API ──────────────────────────────────────────────────────────
+async function apiGet(sheet) {
+  const res = await fetch(`${API}?action=getAll&sheet=${sheet}`);
+  const json = await res.json();
+  return json.data || [];
+}
+async function apiAdd(sheet, row) {
+  const params = new URLSearchParams({ action: 'add', sheet, row: JSON.stringify(row) });
+  const res = await fetch(`${API}?${params}`);
+  return res.json();
+}
+
+// ── Cache (เก็บ data ในหน่วยความจำ ลดการเรียก API ซ้ำ) ───────────
+const cache = {};
+async function getData(sheet, force=false) {
+  if (!cache[sheet] || force) {
+    setSyncing(true);
+    try { cache[sheet] = await apiGet(sheet); } catch(e) { cache[sheet] = cache[sheet]||[]; }
+    setSyncing(false);
+  }
+  return cache[sheet];
+}
+
+// ── Sync indicator ────────────────────────────────────────────────
+function setSyncing(v) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-txt');
+  if (!dot) return;
+  dot.className = 'sync-dot' + (v ? ' syncing' : '');
+  txt.textContent = v ? 'กำลังซิงค์...' : 'ซิงค์กับ Google Sheets แล้ว';
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Format ───────────────────────────────────────────────────────
+const fmt = n => Number(n).toLocaleString('th-TH');
+const fmtDate = ts => new Date(Number(ts)).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'});
+const fmtTime = ts => new Date(Number(ts)).toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+function monthKey(ts) { const d = ts ? new Date(Number(ts)) : new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function monthLabel(k) {
+  const [y,m] = k.split('-');
+  return ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][parseInt(m)-1]+' '+(parseInt(y)+543);
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── State ─────────────────────────────────────────────────────────
+let mType='income', sType='income', curSavKey='face';
+
+// ── Button loading state ──────────────────────────────────────────
+function setBtnLoading(id, loading) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<div class="spinner" style="width:20px;height:20px;margin:0"></div>' : 'บันทึก';
+}
+
+// ── Navigation ────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+async function goHome() { showScreen('home'); await updateHomeBadges(); }
+function goMonthly() { setMTab('add'); showScreen('monthly'); }
+function goSavings(key,title) {
+  curSavKey=key;
+  document.getElementById('sav-title').textContent=title;
+  setSType('income');
+  setSTab('add');
+  showScreen('savings');
+  loadSavTotal();
+}
+function goOther() { setOTab('add'); showScreen('other'); loadOthTotal(); }
+
+// ── Home badges ───────────────────────────────────────────────────
+async function updateHomeBadges() {
+  const mk = monthKey();
+  // monthly
+  try {
+    const data = await getData('monthly', true);
+    const items = data.filter(d => d.mk === mk);
+    const inc = items.filter(d=>d.type==='income').reduce((a,d)=>a+Number(d.amount),0);
+    const exp = items.filter(d=>d.type==='expense').reduce((a,d)=>a+Number(d.amount),0);
+    const bal = inc-exp;
+    const el = document.getElementById('home-monthly-bal');
+    el.textContent = 'เดือนนี้ '+(bal>=0?'+':'')+fmt(bal)+' บาท';
+    el.className = 'menu-badge'+(bal<0?' red':'');
+  } catch(e){}
+
+  for (const k of ['face','phone','aia']) {
+    try {
+      const data = await getData(k, true);
+      const total = data.reduce((a,d)=>a+(d.type==='income'?Number(d.amount):-Number(d.amount)),0);
+      const el = document.getElementById('home-'+k+'-bal');
+      el.textContent = 'คงเหลือ ฿'+fmt(total);
+      el.className = 'menu-badge'+(total<0?' red':'');
+    } catch(e){}
+  }
+
+  try {
+    const data = await getData('other', true);
+    const total = data.reduce((a,d)=>a+Number(d.amount),0);
+    document.getElementById('home-other-bal').textContent = 'รวม ฿'+fmt(total);
+  } catch(e){}
+}
+
+// ── Monthly ───────────────────────────────────────────────────────
+function setMType(t) {
+  mType=t;
+  document.getElementById('mbtn-inc').className='type-btn'+(t==='income'?' sel-inc':'');
+  document.getElementById('mbtn-exp').className='type-btn'+(t==='expense'?' sel-exp':'');
+}
+function setMTab(t) {
+  ['add','sum','log'].forEach(x => {
+    document.getElementById('mv-'+x).style.display = x===t?'block':'none';
+    document.getElementById('mt-'+x).className = 'tab-btn'+(x===t?' active':'');
+  });
+  if (t==='sum') { buildMonthSel(); renderMonthlySummary(); }
+  if (t==='log') renderMonthlyLog();
+}
+async function addMonthly() {
+  const name = document.getElementById('m-name').value.trim();
+  const amount = parseFloat(document.getElementById('m-amount').value);
+  const note = document.getElementById('m-note').value.trim();
+  if (!name||isNaN(amount)||amount<=0) { toast('กรุณากรอกรายการและจำนวนเงิน'); return; }
+  setBtnLoading('m-submit', true);
+  const ts = Date.now();
+  const row = { id:ts, type:mType, name, amount, note, month:'', ts, mk:monthKey() };
+  try {
+    await apiAdd('monthly', row);
+    cache['monthly'] = null;
+    document.getElementById('m-name').value='';
+    document.getElementById('m-amount').value='';
+    document.getElementById('m-note').value='';
+    toast('บันทึกเรียบร้อย ✓');
+  } catch(e) { toast('เกิดข้อผิดพลาด กรุณาลองใหม่'); }
+  setBtnLoading('m-submit', false);
+}
+async function buildMonthSel() {
+  const data = await getData('monthly');
+  const months = [...new Set([monthKey(),...data.map(d=>d.mk)])].sort().reverse();
+  const sel = document.getElementById('m-sel-month');
+  const prev = sel.value;
+  sel.innerHTML = months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  if (prev&&months.includes(prev)) sel.value=prev;
+}
+async function renderMonthlySummary() {
+  const mk = document.getElementById('m-sel-month').value;
+  const data = await getData('monthly');
+  const items = data.filter(d=>d.mk===mk);
+  const inc = items.filter(d=>d.type==='income').reduce((a,d)=>a+Number(d.amount),0);
+  const exp = items.filter(d=>d.type==='expense').reduce((a,d)=>a+Number(d.amount),0);
+  const bal = inc-exp;
+  document.getElementById('ms-inc').textContent='฿'+fmt(inc);
+  document.getElementById('ms-exp').textContent='฿'+fmt(exp);
+  const bel=document.getElementById('ms-bal');
+  bel.textContent=(bal>=0?'':'-')+'฿'+fmt(Math.abs(bal));
+  bel.style.color=bal>=0?'#34c759':'#ff3b30';
+  document.getElementById('ms-items').innerHTML=items.length
+    ? items.slice().reverse().map(logItemHTML).join('')
+    : '<div class="empty"><div class="empty-icon">📭</div>ไม่มีรายการในเดือนนี้</div>';
+}
+async function renderMonthlyLog() {
+  const el=document.getElementById('m-log-list');
+  el.innerHTML='<div class="loading"><div class="spinner"></div><br>กำลังโหลด...</div>';
+  const data = (await getData('monthly', true)).slice().reverse();
+  if (!data.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📭</div>ยังไม่มีรายการ</div>'; return; }
+  const groups={};
+  data.forEach(d=>{ if(!groups[d.mk])groups[d.mk]=[]; groups[d.mk].push(d); });
+  el.innerHTML=Object.entries(groups).map(([mk,items])=>`
+    <div class="month-group-label">${monthLabel(mk)}</div>
+    ${items.map(logItemHTML).join('')}
+  `).join('');
+}
+function logItemHTML(d) {
+  const isInc=d.type==='income';
+  return `<div class="log-item">
+    <div class="li-left">
+      <div class="li-name">${esc(d.name)}</div>
+      <div class="li-sub">${d.note?esc(d.note)+' · ':''}${fmtDate(d.ts)} ${fmtTime(d.ts)}</div>
+    </div>
+    <div class="li-amount ${isInc?'inc':'exp'}">${isInc?'+':'-'}฿${fmt(d.amount)}</div>
+  </div>`;
+}
+
+// ── Savings ───────────────────────────────────────────────────────
+function setSType(t) {
+  sType=t;
+  document.getElementById('sbtn-inc').className='type-btn'+(t==='income'?' sel-inc':'');
+  document.getElementById('sbtn-exp').className='type-btn'+(t==='expense'?' sel-exp':'');
+}
+function setSTab(t) {
+  ['add','log'].forEach(x=>{
+    document.getElementById('sv-'+x).style.display=x===t?'block':'none';
+    document.getElementById('st-'+x).className='tab-btn'+(x===t?' active':'');
+  });
+  if (t==='log') renderSavLog();
+}
+async function loadSavTotal() {
+  const data = await getData(curSavKey, true);
+  const total = data.reduce((a,d)=>a+(d.type==='income'?Number(d.amount):-Number(d.amount)),0);
+  const txt = (total>=0?'':'- ')+'฿'+fmt(Math.abs(total));
+  const color = total>=0?'#1c1c1e':'#ff3b30';
+  ['sav-total-disp','sav-total-log'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=txt;el.style.color=color;}
+  });
+}
+async function addSaving() {
+  const name=document.getElementById('sav-name').value.trim();
+  const amount=parseFloat(document.getElementById('sav-amount').value);
+  const month=document.getElementById('sav-month').value.trim();
+  const note=document.getElementById('sav-note').value.trim();
+  if(!name||isNaN(amount)||amount<=0){toast('กรุณากรอกรายการและจำนวนเงิน');return;}
+  setBtnLoading('sav-submit',true);
+  const row={id:Date.now(),type:sType,name,amount,month,note,ts:Date.now()};
+  try {
+    await apiAdd(curSavKey,row);
+    cache[curSavKey]=null;
+    document.getElementById('sav-name').value='';
+    document.getElementById('sav-amount').value='';
+    document.getElementById('sav-month').value='';
+    document.getElementById('sav-note').value='';
+    await loadSavTotal();
+    toast('บันทึกเรียบร้อย ✓');
+  } catch(e){toast('เกิดข้อผิดพลาด กรุณาลองใหม่');}
+  setBtnLoading('sav-submit',false);
+}
+async function renderSavLog() {
+  const el=document.getElementById('sav-log-list');
+  el.innerHTML='<div class="loading"><div class="spinner"></div><br>กำลังโหลด...</div>';
+  const data=(await getData(curSavKey,true)).slice().reverse();
+  await loadSavTotal();
+  el.innerHTML=data.length?data.map(d=>{
+    const isInc=d.type==='income';
+    return`<div class="log-item">
+      <div class="li-left">
+        <div class="li-name">${esc(d.name)}</div>
+        <div class="li-sub">${d.month?esc(d.month)+' · ':''}${d.note?esc(d.note)+' · ':''}${fmtDate(d.ts)}</div>
+      </div>
+      <div class="li-amount ${isInc?'inc':'exp'}">${isInc?'+':'-'}฿${fmt(d.amount)}</div>
+    </div>`;
+  }).join(''):'<div class="empty"><div class="empty-icon">📭</div>ยังไม่มีรายการ</div>';
+}
+
+// ── Other ─────────────────────────────────────────────────────────
+function setOTab(t) {
+  ['add','log'].forEach(x=>{
+    document.getElementById('ov-'+x).style.display=x===t?'block':'none';
+    document.getElementById('ot-'+x).className='tab-btn'+(x===t?' active':'');
+  });
+  if(t==='log'){loadOthTotal();renderOthLog();}
+}
+async function loadOthTotal() {
+  const data=await getData('other',true);
+  const total=data.reduce((a,d)=>a+Number(d.amount),0);
+  ['oth-total-disp','oth-total-log'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent='฿'+fmt(total);
+  });
+}
+async function addOther() {
+  const cat=document.getElementById('oth-cat').value.trim();
+  const name=document.getElementById('oth-name').value.trim();
+  const amount=parseFloat(document.getElementById('oth-amount').value);
+  const note=document.getElementById('oth-note').value.trim();
+  if(!cat||isNaN(amount)||amount<=0){toast('กรุณากรอกประเภทและจำนวนเงิน');return;}
+  setBtnLoading('oth-submit',true);
+  const ts=Date.now();
+  const row={id:ts,cat,name,amount,note,ts,mk:monthKey()};
+  try {
+    await apiAdd('other',row);
+    cache['other']=null;
+    document.getElementById('oth-cat').value='';
+    document.getElementById('oth-name').value='';
+    document.getElementById('oth-amount').value='';
+    document.getElementById('oth-note').value='';
+    await loadOthTotal();
+    toast('บันทึกเรียบร้อย ✓');
+  } catch(e){toast('เกิดข้อผิดพลาด กรุณาลองใหม่');}
+  setBtnLoading('oth-submit',false);
+}
+async function renderOthLog() {
+  const el=document.getElementById('oth-log-list');
+  el.innerHTML='<div class="loading"><div class="spinner"></div><br>กำลังโหลด...</div>';
+  const data=(await getData('other',true)).slice().reverse();
+  el.innerHTML=data.length?data.map(d=>`<div class="log-item">
+    <div class="li-left">
+      <div class="li-name">${esc(d.cat)}</div>
+      <div class="li-sub">${d.name?esc(d.name)+' · ':''}${d.note?esc(d.note)+' · ':''}${fmtDate(d.ts)}</div>
+    </div>
+    <div class="li-amount exp">-฿${fmt(d.amount)}</div>
+  </div>`).join(''):'<div class="empty"><div class="empty-icon">📭</div>ยังไม่มีรายการ</div>';
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+document.getElementById('home-date').textContent =
+  new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+updateHomeBadges();
+</script>
+</body>
+</html>
